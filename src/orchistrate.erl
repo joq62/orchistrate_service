@@ -42,13 +42,16 @@ simple_campaign()->
     {ok,AppConfig}=file:consult(?APP_CONFIG_FILE),
     {ok,CatalogConfig}=file:consult(?CATALOG_CONFIG_FILE),
     AvailableServices=dns_service:all(),
+    io:format("AvailableServices ~p~n",[{?MODULE,?LINE,AvailableServices}]),
+
     Missing=[{ServiceId,Node}||{ServiceId,Node}<-AppConfig,
 			       false==lists:member({ServiceId,Node},AvailableServices)],
     
     StartInfoMissing=create_start_info(Missing,CatalogConfig,[]),				    
     io:format("StartInfoMissing ~p~n",[{?MODULE,?LINE,StartInfoMissing}]),
 
-    [rpc:call(Node,boot_service,start_service,[ServiceId,Type,Source])||{Node,ServiceId,Type,Source}<-StartInfoMissing],
+    Debug=[rpc:call(Node,boot_service,start_service,[ServiceId,Type,Source])||{Node,ServiceId,Type,Source}<-StartInfoMissing],
+    io:format("Debug ~p~n",[{?MODULE,?LINE,Debug}]),
 
     Obsolite=[{ServiceId,Node}||{ServiceId,Node}<-AvailableServices,
 			    false==lists:member({ServiceId,Node},AppConfig)],	

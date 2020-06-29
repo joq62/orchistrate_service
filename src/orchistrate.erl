@@ -60,7 +60,7 @@ create_start_info([],_CatalogConfig,StartInfo)->
     StartInfo;
     
 create_start_info([{ServiceId,Node}|T],CatalogConfig,Acc)->
-    NewAcc=case lists:keymember(ServiceId,1,CatalogConfig) of
+    NewAcc=case lists:keyfind(ServiceId,1,CatalogConfig) of
 	       false->
 		   Acc;
 	       {ServiceId,Type,Source} ->

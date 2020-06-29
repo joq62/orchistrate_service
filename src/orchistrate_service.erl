@@ -25,12 +25,12 @@
 %% Definitions 
 %% --------------------------------------------------------------------
 -define(ORCHISTRATE_HEARTBEAT,20*1000).
--define(CATALOG_URL,"https://github.com/joqerlang/app_config.git/").
--define(CATALOG_DIR,"app_config").
+-define(APP_CONFIG_URL,"https://github.com/joq62/app_config.git/").
+-define(APP_CONFIG_DIR,"app_config").
 -ifdef(infra_test).
--define(CATALOG_FILENAME,"app_infra_test.spec").
+-define(APP_CONFIG_ILENAME,"app_infra_test.spec").
 -else.
--define(CATALOG_FILENAME,"app.spec").
+-define(APP_CONFIG_FILENAME,"app.config").
 -endif.
 
 -export([get_info/1,update_info/0,
@@ -92,7 +92,7 @@ heart_beat(Interval)->
 %
 %% --------------------------------------------------------------------
 init([]) ->
-    {ok,AppInfo}=orchistrate:update_info(?CATALOG_URL,?CATALOG_DIR,?CATALOG_FILENAME),
+    {ok,AppInfo}=orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILENAME),
     spawn(fun()->h_beat(?ORCHISTRATE_HEARTBEAT) end),     
     
     {ok, #state{app_info=AppInfo}}.   
@@ -120,7 +120,7 @@ handle_call({get_info,WantedServiceId}, _From, State) ->
 				   ServiceId==WantedServiceId],
     {reply, Reply,State};
 handle_call({update_info}, _From, State) ->
-    Reply=case orchistrate:update_info(?CATALOG_URL,?CATALOG_DIR,?CATALOG_FILENAME) of
+    Reply=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILENAME) of
 	      {ok,AppInfo}->
 		  NewState=State#state{app_info=AppInfo},
 		  ok;
@@ -145,7 +145,7 @@ handle_call(Request, From, State) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% -------------------------------------------------------------------
 handle_cast({heart_beat,Interval}, State) ->
-    NewState=case orchistrate:update_info(?CATALOG_URL,?CATALOG_DIR,?CATALOG_FILENAME) of
+    NewState=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILENAME) of
 		 {ok,AppInfo}->
 		     State#state{app_info=AppInfo};
 		 Err->

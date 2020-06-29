@@ -55,7 +55,6 @@ setup()->
     ok.
 
 cleanup()->
-   % ok=application:stop(catalog_service),
     init:stop().
 
 

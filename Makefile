@@ -2,7 +2,7 @@ all:
 	rm -rf app_config catalog node_config  logfiles *_service include *~ */*~ */*/*~;
 	rm -rf */*.beam;
 	rm -rf *.beam erl_crash.dump */erl_crash.dump */*/erl_crash.dump;
-	cp src/*.app ebin;
+	cp src/1*.app ebin;
 	erlc -I ../include -o ebin src/*.erl;
 doc_gen:
 	rm -rf  node_config logfiles doc/*;

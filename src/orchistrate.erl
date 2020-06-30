@@ -29,6 +29,7 @@
 update_info(GitUrl,Dir,FileName)->
     os:cmd("rm -rf "++Dir),
     os:cmd("git clone "++GitUrl),
+    timer:sleep(100),
     {R,Info}=file:consult(filename:join(Dir,FileName)),
     {R,Info}.
 

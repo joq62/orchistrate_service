@@ -38,8 +38,8 @@ update_info(GitUrl,Dir,FileName)->
 %% --------------------------------------------------------------------
 %% 1 Check missing services - try to start them
 simple_campaign()->
-    {ok,AppConfig}=file:consult(?APP_CONFIG_FILE),
-    {ok,CatalogConfig}=file:consult(?CATALOG_CONFIG_FILE),
+    {ok,AppConfig}=file:consult(filename:join(?APP_CONFIG_DIR,?APP_CONFIG_FILE)),
+    {ok,CatalogConfig}=file:consult(filename:join(?CATALOG_CONFIG_DIR,?CATALOG_CONFIG_FILE)),
     AvailableServices=dns_service:all(),
     io:format("AvailableServices ~p~n",[{?MODULE,?LINE,AvailableServices}]),
 

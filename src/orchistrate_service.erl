@@ -84,7 +84,7 @@ heart_beat(Interval)->
 %
 %% --------------------------------------------------------------------
 init([]) ->
-    {ok,AppInfo}=orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILENAME),
+    {ok,AppInfo}=orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILE),
     spawn(fun()->h_beat(?ORCHISTRATE_HEARTBEAT) end),     
     
     {ok, #state{app_info=AppInfo}}.   
@@ -112,7 +112,7 @@ handle_call({get_info,WantedServiceId}, _From, State) ->
 				   ServiceId==WantedServiceId],
     {reply, Reply,State};
 handle_call({update_info}, _From, State) ->
-    Reply=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILENAME) of
+    Reply=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILE) of
 	      {ok,AppInfo}->
 		  NewState=State#state{app_info=AppInfo},
 		  ok;
@@ -137,7 +137,7 @@ handle_call(Request, From, State) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% -------------------------------------------------------------------
 handle_cast({heart_beat,Interval}, State) ->
-    NewState=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILENAME) of
+    NewState=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILE) of
 		 {ok,AppInfo}->
 		     State#state{app_info=AppInfo};
 		 Err->

@@ -6,12 +6,11 @@
 -module(orchistrate).
  
 
--define(APP_CONFIG_FILE,"app_config/app.config").
--define(CATALOG_CONFIG_FILE,"catalog/catalog.info").
-
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
+-include("config.hrl").
+
 
 %-compile(export_all).
 -export([simple_campaign/0,

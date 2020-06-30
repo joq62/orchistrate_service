@@ -10,7 +10,8 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
-
+-include("config.hrl").
+-include("timeout.hrl").
 %% --------------------------------------------------------------------
 
 
@@ -24,15 +25,6 @@
 %% --------------------------------------------------------------------
 %% Definitions 
 %% --------------------------------------------------------------------
--define(ORCHISTRATE_HEARTBEAT,20*1000).
--define(APP_CONFIG_URL,"https://github.com/joq62/app_config.git/").
--define(APP_CONFIG_DIR,"app_config").
--ifdef(infra_test).
--define(APP_CONFIG_ILENAME,"app_infra_test.spec").
--else.
--define(APP_CONFIG_FILENAME,"app.config").
--endif.
-
 -export([get_info/1,update_info/0,
 	 get_service/1
 	]).

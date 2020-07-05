@@ -12,6 +12,7 @@
 %% --------------------------------------------------------------------
 -include("config.hrl").
 -include("timeout.hrl").
+-include("log.hrl").
 %% --------------------------------------------------------------------
 
 
@@ -117,6 +118,7 @@ handle_call({update_info}, _From, State) ->
 		  NewState=State#state{app_info=AppInfo},
 		  ok;
 	      {error,Err}->
+		  ?LOG_INFO(error,Err),
 		  NewState=State,
 		  {error,Err}
 	  end,
@@ -126,6 +128,7 @@ handle_call({stop}, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
 handle_call(Request, From, State) ->
+    ?LOG_INFO(error,{unmatched_signal,Request,From}),
     Reply = {unmatched_signal,?MODULE,Request,From},
     {reply, Reply, State}.
 
@@ -141,7 +144,7 @@ handle_cast({heart_beat,Interval}, State) ->
 		 {ok,AppInfo}->
 		     State#state{app_info=AppInfo};
 		 Err->
-		     io:format("error ~p~n",[{?MODULE,?LINE,Err}]),
+		     ?LOG_INFO(error,Err),
 		     State
 	     end,
     spawn(fun()->h_beat(Interval) end),    
@@ -192,11 +195,9 @@ h_beat(Interval)->
     timer:sleep(Interval),
     case rpc:call(node(),orchistrate,simple_campaign,[],15*1000) of
 	ok->
-	    io:format("ok ~p~n",[{?MODULE,?LINE,ok}]),
 	    ok;
 	Err->
-	     io:format("error ~p~n",[{?MODULE,?LINE,Err}]),
-	    rpc:call(node(),lib_service,log_event,[?MODULE,?LINE,orchistrater,campaign,error,[Err]])
+	    ?LOG_INFO(error,Err)
     end,
     rpc:cast(node(),?MODULE,heart_beat,[Interval]).
 

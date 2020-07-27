@@ -9,12 +9,10 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--include("config.hrl").
 -include("log.hrl").
 
 %-compile(export_all).
--export([simple_campaign/0,
-	 update_info/3]).
+-export([simple_campaign/0]).
 
 
 
@@ -23,15 +21,6 @@
 %% External functions
 %% ====================================================================
 
-%% @doc: update_catalog(GitUrl,Dir,FileName)->{ok,Config}|{error,Err} retreives the latets  config spec from git
-
--spec(update_info(GitUrl::string(),Dir::string(),FileName::string())->{ok,Config::[tuple()]}|{error,Err::string()}).
-update_info(GitUrl,Dir,FileName)->
-    os:cmd("rm -rf "++Dir),
-    os:cmd("git clone "++GitUrl),
-    timer:sleep(100),
-    {R,Info}=file:consult(filename:join(Dir,FileName)),
-    {R,Info}.
 
 %% --------------------------------------------------------------------
 %% 
@@ -39,8 +28,8 @@ update_info(GitUrl,Dir,FileName)->
 %% --------------------------------------------------------------------
 %% 1 Check missing services - try to start them
 simple_campaign()->
-    {ok,AppConfig}=file:consult(filename:join(?APP_CONFIG_DIR,?APP_CONFIG_FILE)),
-    {ok,CatalogConfig}=file:consult(filename:join(?CATALOG_CONFIG_DIR,?CATALOG_CONFIG_FILE)),
+    {ok,AppConfig}=config_service:get_info(app_info),
+    {ok,CatalogConfig}=config_service:get_info(catalog_info),
     AvailableServices=dns_service:all(),
  %  io:format("AvailableServices ~p~n",[{?MODULE,?LINE,AvailableServices}]),
 
@@ -53,7 +42,7 @@ simple_campaign()->
 	    ?LOG_INFO(event,['Missing services ',Missing]),
 	    StartInfoMissing=create_start_info(Missing,CatalogConfig,[]),				    
 	    % io:format("StartInfoMissing ~p~n",[{?MODULE,?LINE,StartInfoMissing}]),
-	    StartResult=[{Node,rpc:call(Node,boot_service,start_service,[ServiceId,Type,Source])}||{Node,ServiceId,Type,Source}<-StartInfoMissing],
+	    StartResult=[{Node,rpc:call(Node,vm_service,start_service,[ServiceId])}||{Node,ServiceId,_Type,_Source}<-StartInfoMissing],
 	    %io:format("Debug ~p~n",[{?MODULE,?LINE,Debug}]),
 	    FailedStarts=[{Node,{error,Err}}||{Node,{error,Err}}<-StartResult],
 	    case FailedStarts of
@@ -72,7 +61,7 @@ simple_campaign()->
 	    ok;
 	Obsolite->
 	    ?LOG_INFO(event,['obsolite services',Obsolite]),
-	    [rpc:call(Node,boot_service,stop_service,[ServiceId])||{ServiceId,Node}<-Obsolite]
+	    [rpc:call(Node,vm_service,stop_service,[ServiceId])||{ServiceId,Node}<-Obsolite]
     end,
     ok.
 

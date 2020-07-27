@@ -10,8 +10,8 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--include("config.hrl").
--include("timeout.hrl").
+%-include("config.hrl").
+%-include("timeout.hrl").
 -include("log.hrl").
 %% --------------------------------------------------------------------
 
@@ -85,8 +85,8 @@ heart_beat(Interval)->
 %
 %% --------------------------------------------------------------------
 init([]) ->
-    {ok,AppInfo}=orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILE),
-    spawn(fun()->h_beat(?ORCHISTRATE_HEARTBEAT) end),     
+    {ok,AppInfo}=config_service:get_info(app_info),
+    spawn(fun()->h_beat(hb_interval) end),     
     
     {ok, #state{app_info=AppInfo}}.   
     
@@ -112,17 +112,7 @@ handle_call({get_info,WantedServiceId}, _From, State) ->
     Reply=[{ServiceId,Node}||{ServiceId,Node}<-State#state.app_info,
 				   ServiceId==WantedServiceId],
     {reply, Reply,State};
-handle_call({update_info}, _From, State) ->
-    Reply=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILE) of
-	      {ok,AppInfo}->
-		  NewState=State#state{app_info=AppInfo},
-		  ok;
-	      {error,Err}->
-		  ?LOG_INFO(error,Err),
-		  NewState=State,
-		  {error,Err}
-	  end,
-    {reply, Reply,NewState};
+
 
 handle_call({stop}, _From, State) ->
     {stop, normal, shutdown_ok, State};
@@ -140,7 +130,7 @@ handle_call(Request, From, State) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% -------------------------------------------------------------------
 handle_cast({heart_beat,Interval}, State) ->
-    NewState=case orchistrate:update_info(?APP_CONFIG_URL,?APP_CONFIG_DIR,?APP_CONFIG_FILE) of
+    NewState=case config_service:get_info(app_info) of
 		 {ok,AppInfo}->
 		     State#state{app_info=AppInfo};
 		 Err->

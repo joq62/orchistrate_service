@@ -1,39 +1,35 @@
 %%% -------------------------------------------------------------------
 %%% @author  : Joq Erlang
-%%% @doc: : 
+%%% @doc oam  service   
+%%% Central OaM functions for information 
 %%%  
-%%% Created : 10 dec 2012
 %%% -------------------------------------------------------------------
--module(orchistrate_service). 
+-module(test_service).  
 
 -behaviour(gen_server).
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
-%-include("config.hrl").
-%-include("timeout.hrl").
 -include("log.hrl").
-%% --------------------------------------------------------------------
 
+%% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
 %% Key Data structures
 %% 
 %% --------------------------------------------------------------------
--record(state,{available,missing,obsolite}).
+-record(state,{test_suit}).
 
 
 %% --------------------------------------------------------------------
-%% Definitions 
-%% --------------------------------------------------------------------
--export([get_info/1,update_info/0,
-	 get_service/1
+
+-export([do_test/0,do_test/1,
+	 ping/0
 	]).
 
--export([start/0,
-	 stop/0,
-	 ping/0,
-	 heart_beat/1
+-export([boot/0,
+	 start/0,
+	 stop/0
 	]).
 
 %% gen_server callbacks
@@ -44,8 +40,10 @@
 %% External functions
 %% ====================================================================
 
-%% Asynchrounus Signals
+boot()->
+    ok=application:start(?MODULE).
 
+%% Asynchrounus Signals
 
 
 %% Gen server functions
@@ -53,22 +51,21 @@
 start()-> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 stop()-> gen_server:call(?MODULE, {stop},infinity).
 
+%%-----------------------------------------------------------------------
 
-ping()-> 
+
+-spec(ping()->{pong,node(),module()}).
+ping()->
     gen_server:call(?MODULE, {ping},infinity).
+
+do_test()->
+    gen_server:call(?MODULE, {do_test},infinity).
+do_test(TestSuit)->
+    gen_server:call(?MODULE, {do_test,TestSuit},infinity).
+
 
 %%-----------------------------------------------------------------------
 
-%%
-get_service(ServiceId)->
-    gen_server:call(?MODULE, {get_service,ServiceId},infinity).
-get_info(ServiceId)->
-    gen_server:call(?MODULE, {get_info,ServiceId},infinity).
-update_info()->
-     gen_server:call(?MODULE, {update_info},infinity).
-
-heart_beat(Interval)->
-    gen_server:cast(?MODULE, {heart_beat,Interval}).
 
 
 %% ====================================================================
@@ -85,10 +82,9 @@ heart_beat(Interval)->
 %
 %% --------------------------------------------------------------------
 init([]) ->
-    {ok,HbInterval}= application:get_env(hb_interval),
-    spawn(fun()->h_beat(HbInterval) end),     
-    
-    {ok, #state{}}.   
+    {ok,TestSuit}= application:get_env(test_suit),
+    spawn(fun()->auto_test() end),
+    {ok, #state{test_suit=TestSuit}}.
     
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
@@ -100,15 +96,24 @@ init([]) ->
 %%          {stop, Reason, Reply, State}   | (terminate/2 is called)
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
-handle_call({ping},_From,State) ->
-    Reply={pong,node(),?MODULE},
+
+handle_call({do_test}, _From, State) ->
+    Reply=[{M,apply(M,F,A)}||{M,F,A}<-State#state.test_suit],
     {reply, Reply, State};
+
+handle_call({do_test,TestSuit}, _From, State) ->
+     Reply=[{M,apply(M,F,A)}||{M,F,A}<-TestSuit],
+    {reply, Reply, State};
+
+handle_call({ping}, _From, State) ->
+     Reply={pong,node(),?MODULE},
+    {reply, Reply, State};
+
 
 handle_call({stop}, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
 handle_call(Request, From, State) ->
-    ?LOG_INFO(error,{unmatched_signal,Request,From}),
     Reply = {unmatched_signal,?MODULE,Request,From},
     {reply, Reply, State}.
 
@@ -118,11 +123,7 @@ handle_call(Request, From, State) ->
 %% Returns: {noreply, State}          |
 %%          {noreply, State, Timeout} |
 %%          {stop, Reason, State}            (terminate/2 is called)
-%% -------------------------------------------------------------------
-handle_cast({heart_beat,Interval}, State) ->
-
-    spawn(fun()->h_beat(Interval) end),    
-    {noreply, State};
+%% --------------------------------------------------------------------
 
 handle_cast(Msg, State) ->
     io:format("unmatched match cast ~p~n",[{?MODULE,?LINE,Msg}]),
@@ -135,7 +136,6 @@ handle_cast(Msg, State) ->
 %%          {noreply, State, Timeout} |
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
-
 handle_info(Info, State) ->
     io:format("unmatched match info ~p~n",[{?MODULE,?LINE,Info}]),
     {noreply, State}.
@@ -165,15 +165,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% Description:
 %% Returns: non
 %% --------------------------------------------------------------------
-h_beat(Interval)->
-    timer:sleep(Interval),
-    case rpc:call(node(),orchistrate,simple_campaign,[],15*1000) of
-	ok->
-	    ok;
-	Err->
-	    ?LOG_INFO(error,Err)
-    end,
-    rpc:cast(node(),?MODULE,heart_beat,[Interval]).
+
 
 %% --------------------------------------------------------------------
 %% Internal functions
@@ -184,3 +176,6 @@ h_beat(Interval)->
 %% Description:
 %% Returns: non
 %% --------------------------------------------------------------------
+auto_test()->
+    timer:sleep(1000),
+    io:format("~p~n",[test_service:do_test()]).

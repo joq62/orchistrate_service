@@ -4,16 +4,17 @@
 %%% 
 %%% Created : 10 dec 2012
 %%% -------------------------------------------------------------------
--module(orchistrate_service_tests).  
+-module(orc_test).  
    
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--include_lib("eunit/include/eunit.hrl").
-%% --------------------------------------------------------------------
 
-%% External exports
+-include_lib("eunit/include/eunit.hrl").
+
+%% --------------------------------------------------------------------
 -export([start/0]).
+%-compile(export_all).
 
 
 
@@ -21,42 +22,25 @@
 %% External functions
 %% ====================================================================
 
-%% --------------------------------------------------------------------
-%% Function:tes cases
-%% Description: List of test cases 
+%% 
+%% ----------------------------------------------- ---------------------
+%% Function:emulate loader
+%% Description: requires pod+container module
 %% Returns: non
 %% --------------------------------------------------------------------
 start()->
-    spawn(fun()->eunit:test({timeout,10*60,orchistrate_service}) end).
-
-cases_test()->
-    ?debugMsg("Test system setup"),
-    ?assertEqual(ok,setup()),
-
-    %% Start application tests
-    
-    ?debugMsg("orchistrate test "),
-    ?assertEqual(ok,orc_test:start()),
- %   ?debugMsg("service test "),
-  %  ?assertEqual(ok,services_test:start()),
-
-    ?debugMsg("Start stop_test_system:start"),
-    %% End application tests
-    cleanup(),
+    ?debugMsg("loop()"),
+    ?assertEqual(ok,loop(2,2000,na)),
+ 		 
     ok.
-
-
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
-%% --------------------------------------------------------------------
-setup()->
-    ok.
-
-cleanup()->
-    init:stop().
-
-
-
-
+%% -------------------------------------------------------------------
+loop(0,_,R)->
+    R;
+loop(N,Interval,R)->
+    io:format("N= ~p~n",[N]),
+    timer:sleep(Interval),
+    loop(N-1,Interval,R).

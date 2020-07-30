@@ -29,8 +29,8 @@
 %% 1 Check missing services - try to start them
 simple_campaign()->
     {ok,AppConfig}=config_service:get_info(app_info),
-    {ok,CatalogConfig}=config_service:get_info(catalog_info),
-    AvailableServices=dns_service:all(),
+ %   {ok,CatalogConfig}=config_service:get_info(catalog_info),
+    AvailableServices=sd_service:fetch_all(all),
  %  io:format("AvailableServices ~p~n",[{?MODULE,?LINE,AvailableServices}]),
 
     Missing=[{ServiceId,Node}||{ServiceId,Node}<-AppConfig,
@@ -40,9 +40,8 @@ simple_campaign()->
 	    ok;
 	Missing->
 	    ?LOG_INFO(event,['Missing services ',Missing]),
-	    StartInfoMissing=create_start_info(Missing,CatalogConfig,[]),				    
 	    % io:format("StartInfoMissing ~p~n",[{?MODULE,?LINE,StartInfoMissing}]),
-	    StartResult=[{Node,rpc:call(Node,vm_service,start_service,[ServiceId])}||{Node,ServiceId,_Type,_Source}<-StartInfoMissing],
+	    StartResult=[{Node,rpc:call(Node,vm_service,start_service,[ServiceId])}||{ServiceId,Node}<-Missing],
 	    %io:format("Debug ~p~n",[{?MODULE,?LINE,Debug}]),
 	    FailedStarts=[{Node,{error,Err}}||{Node,{error,Err}}<-StartResult],
 	    case FailedStarts of
@@ -64,15 +63,3 @@ simple_campaign()->
 	    [rpc:call(Node,vm_service,stop_service,[ServiceId])||{ServiceId,Node}<-Obsolite]
     end,
     ok.
-
-create_start_info([],_CatalogConfig,StartInfo)->
-    StartInfo;
-    
-create_start_info([{ServiceId,Node}|T],CatalogConfig,Acc)->
-    NewAcc=case lists:keyfind(ServiceId,1,CatalogConfig) of
-	       false->
-		   Acc;
-	       {ServiceId,Type,Source} ->
-		   [{Node,ServiceId,Type,Source}|Acc]
-	   end, 
-    create_start_info(T,CatalogConfig,NewAcc).

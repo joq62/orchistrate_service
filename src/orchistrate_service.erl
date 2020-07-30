@@ -96,6 +96,10 @@ init([]) ->
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
 handle_call({ping},_From,State) ->
+    Reply={pong,node(),?MODULE},
+    {reply, Reply, State};
+
+handle_call({get_info},_From,State) ->
     Reply=[{missing,State#state.missing},
 	   {obsolite,State#state.obsolite},
 	   {failed,State#state.failed}],

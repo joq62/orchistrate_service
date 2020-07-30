@@ -28,13 +28,13 @@
 %% --------------------------------------------------------------------
 %% 1 Check missing services - try to start them
 simple_campaign()->
-    {ok,AppConfig}=config_service:get_info(app_info),
- %   {ok,CatalogConfig}=config_service:get_info(catalog_info),
-    AvailableServices=sd_service:fetch_all(all),
- %  io:format("AvailableServices ~p~n",[{?MODULE,?LINE,AvailableServices}]),
-
-    Missing=[{ServiceId,Node}||{ServiceId,Node}<-AppConfig,
+    AppInfo=config_service:get_info(app_info),
+%    io:format("AppInfo ~p~n",[{?MODULE,?LINE,AppInfo}]),
+   AvailableServices=sd_service:fetch_all(all),
+%   io:format("AvailableServices ~p~n",[{?MODULE,?LINE,AvailableServices}]),
+    Missing=[{ServiceId,Node}||{ServiceId,Node}<-AppInfo,
 			       false==lists:member({ServiceId,Node},AvailableServices)],
+%    io:format("Missing ~p~n",[{?MODULE,?LINE,Missing}]),
     case Missing of
 	[]->
 	    ok;
@@ -53,8 +53,8 @@ simple_campaign()->
     end,
     
     Obsolite=[{ServiceId,Node}||{ServiceId,Node}<-AvailableServices,
-			    false==lists:member({ServiceId,Node},AppConfig)],	
-    %io:format("Obsolite ~p~n",[{?MODULE,?LINE,Obsolite}]),
+			    false==lists:member({ServiceId,Node},AppInfo)],	
+ %   io:format("Obsolite ~p~n",[{?MODULE,?LINE,Obsolite}]),
     case Obsolite of
 	[]->
 	    ok;

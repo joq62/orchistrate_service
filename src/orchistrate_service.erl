@@ -10,8 +10,6 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
-%-include("config.hrl").
-%-include("timeout.hrl").
 -include("log.hrl").
 %% --------------------------------------------------------------------
 
@@ -20,20 +18,19 @@
 %% Key Data structures
 %% 
 %% --------------------------------------------------------------------
--record(state,{available,missing,obsolite}).
+-record(state,{missing,obsolite,failed}).
 
 
 %% --------------------------------------------------------------------
 %% Definitions 
 %% --------------------------------------------------------------------
--export([get_info/1,update_info/0,
-	 get_service/1
+-export([get_info/0,update_info/0
 	]).
 
 -export([start/0,
 	 stop/0,
 	 ping/0,
-	 heart_beat/1
+	 heart_beat/2
 	]).
 
 %% gen_server callbacks
@@ -60,15 +57,13 @@ ping()->
 %%-----------------------------------------------------------------------
 
 %%
-get_service(ServiceId)->
-    gen_server:call(?MODULE, {get_service,ServiceId},infinity).
-get_info(ServiceId)->
-    gen_server:call(?MODULE, {get_info,ServiceId},infinity).
+get_info()->
+    gen_server:call(?MODULE, {get_info},infinity).
 update_info()->
      gen_server:call(?MODULE, {update_info},infinity).
 
-heart_beat(Interval)->
-    gen_server:cast(?MODULE, {heart_beat,Interval}).
+heart_beat(Interval,Result)->
+    gen_server:cast(?MODULE, {heart_beat,Interval,Result}).
 
 
 %% ====================================================================
@@ -101,7 +96,9 @@ init([]) ->
 %%          {stop, Reason, State}            (aterminate/2 is called)
 %% --------------------------------------------------------------------
 handle_call({ping},_From,State) ->
-    Reply={pong,node(),?MODULE},
+    Reply=[{missing,State#state.missing},
+	   {obsolite,State#state.obsolite},
+	   {failed,State#state.failed}],
     {reply, Reply, State};
 
 handle_call({stop}, _From, State) ->
@@ -119,10 +116,10 @@ handle_call(Request, From, State) ->
 %%          {noreply, State, Timeout} |
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% -------------------------------------------------------------------
-handle_cast({heart_beat,Interval}, State) ->
-
+handle_cast({heart_beat,Interval,{Missing,Obsolite,FailedStarts}}, State) ->
+    NewState=State#state{missing=Missing,obsolite=Obsolite,failed=FailedStarts},
     spawn(fun()->h_beat(Interval) end),    
-    {noreply, State};
+    {noreply, NewState};
 
 handle_cast(Msg, State) ->
     io:format("unmatched match cast ~p~n",[{?MODULE,?LINE,Msg}]),
@@ -168,15 +165,8 @@ code_change(_OldVsn, State, _Extra) ->
 h_beat(Interval)->
 %    io:format("h_beat  ~p~n",[{?MODULE,?LINE}]),
     timer:sleep(Interval),
-    case rpc:call(node(),orchistrate,simple_campaign,[],15*1000) of
-	ok->
-%	    io:format("ok  ~p~n",[{?MODULE,?LINE}]),
-	    ok;
-	Err->
-%	    io:format("Err ~p~n",[{?MODULE,?LINE,Err}]),
-	    ?LOG_INFO(error,Err)
-    end,
-    rpc:cast(node(),?MODULE,heart_beat,[Interval]).
+    Result=rpc:call(node(),orchistrate,simple_campaign,[],15*1000),
+    rpc:cast(node(),?MODULE,heart_beat,[Interval,Result]).
 
 %% --------------------------------------------------------------------
 %% Internal functions

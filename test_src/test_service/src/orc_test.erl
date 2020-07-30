@@ -41,6 +41,7 @@ start()->
 loop(0,_,R)->
     R;
 loop(N,Interval,R)->
+    
     io:format("N= ~p~n",[N]),
     timer:sleep(Interval),
     loop(N-1,Interval,R).

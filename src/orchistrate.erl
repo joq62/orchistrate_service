@@ -37,6 +37,7 @@ simple_campaign()->
 %    io:format("Missing ~p~n",[{?MODULE,?LINE,Missing}]),
     case Missing of
 	[]->
+	    FailedStarts=[],
 	    ok;
 	Missing->
 	    ?LOG_INFO(event,['Missing services ',Missing]),
@@ -62,4 +63,5 @@ simple_campaign()->
 	    ?LOG_INFO(event,['obsolite services',Obsolite]),
 	    [rpc:call(Node,vm_service,stop_service,[ServiceId])||{ServiceId,Node}<-Obsolite]
     end,
-    ok.
+
+    {Missing,Obsolite,FailedStarts}.
